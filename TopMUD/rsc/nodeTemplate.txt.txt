@@ -1,0 +1,10 @@
+@all types String unless otherwise
+
+pos: #format zonex-zoney:x-y
+name: 
+desc: 
+view: 
+items: #format 
+mobs: #format id:name
+exits: #format [n,e,s,w]:x-y
+properties: #format

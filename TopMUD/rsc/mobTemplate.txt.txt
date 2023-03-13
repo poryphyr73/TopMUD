@@ -1,0 +1,15 @@
+@all types String unless otherwise
+
+id: #format int:nameID
+name: 
+desc: 
+long: 
+view: 
+behaviour: #format
+threat: @int #format 0-100
+hp: #format DICE
+ac: @int 0-100
+dmg: #format DICE
+acc: @int 0-100
+atk: #format name:effects:mod
+drop: @int format ppggsscc

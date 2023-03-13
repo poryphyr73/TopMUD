@@ -1,0 +1,10 @@
+@all types String unless otherwise
+
+id: #format x-y
+name:
+desc:
+long:
+view:
+reset: @int #format this>=0 #cond if(this=0) never : ticks 
+mobs: #format {id:x-y},
+items: #format {id:x-y},

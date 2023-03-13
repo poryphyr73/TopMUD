@@ -1,0 +1,12 @@
+@all types String unless otherwise
+
+id: #format int:nameID
+name: 
+canget: @bool
+alias: 
+desc: 
+elem: 
+effects: #format
+durability: #format current:total #cond if(current<0) break #cond if(total=0) unbreakable
+weight: @int #format ttkkgg
+value: @int #format ppggsscc
