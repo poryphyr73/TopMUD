@@ -1,17 +1,19 @@
 package Server;
 
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.io.*;
 import java.net.*;
 
 public class Server {
+    private HashMap<String, Connection> connectionManager = new HashMap<>();
     public static void main(String[] args) throws Exception
     {
         try (ServerSocket serverSocket = new ServerSocket(7777);
         ) {
             while (true) {
-                ConnectionManager manager = new ConnectionManager(serverSocket.accept());
-                manager.start(); // starts respond to the client on another thread
+                Connection c = new Connection(serverSocket.accept());
+                c.start(); // starts respond to the client on another thread
             }
 
         } catch(IOException e) {
@@ -20,10 +22,10 @@ public class Server {
         }
     }
 
-    private static class ConnectionManager extends Thread
+    private static class Connection extends Thread
     {
         private Socket s;
-        private ConnectionManager(Socket s) {this.s = s;}
+        private Connection(Socket s) {this.s = s;}
 
         @Override
         public void run()

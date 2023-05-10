@@ -7,6 +7,7 @@ import java.util.Scanner;
 public class Client extends Thread
 {
     final static int PORT = 7777;
+    private static Scanner kb = new Scanner(System.in);
     
     public static void main(String[] args) {
         try(
@@ -14,13 +15,10 @@ public class Client extends Thread
             DataInputStream is = new DataInputStream(s.getInputStream());
             DataOutputStream os = new DataOutputStream(s.getOutputStream());
         ){
-            System.out.println("Connected!");
             Listener lis = new Listener(is);
             lis.start();
-            System.out.println("Created!");
 
             String ms = "";
-            Scanner kb = new Scanner(System.in);
             while(true){
                 ms = kb.nextLine();
                 try {os.writeUTF(ms);} catch (IOException e) {
