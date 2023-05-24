@@ -77,8 +77,7 @@ public class Client extends Thread
         }
     }
 
-    private class Player
-    {
-        
-    }
+    public int getSocket() {return sock;}
+    public boolean isPlaying() {return cState == ConnectionStates.PLAYING && !isClosing;}
+    public boolean outputPending() {return !"".equals(out);}
 }
