@@ -6,8 +6,36 @@ import java.util.Scanner;
 
 public class Client extends Thread
 {
-    final static int PORT = 7777;
+    //info of the player's connection
+    private int port;
+    private int sock;
+    private String ad;
+    private ConnectionStates cState;
+
+    //runtime info
+    private String prompt, playerName, pass;
+    private int room, badPassCount;
+    private boolean isClosing;
+
+    //buffered I/O messages
+    private String out;
+    private String in;
     private static Scanner kb = new Scanner(System.in);
+
+    Client(int _sock, int _port, String _ad)
+    {
+        sock = _sock; port = _port; ad = _ad;
+        init();
+    }
+
+    private void init()
+    {
+        cState = ConnectionStates.AWAITNG_NAME;
+
+        room = 1000;
+
+        prompt = "Enter username. Enter 'new' to create a new character ... ";
+    }
     
     public static void main(String[] args) {
         try(
@@ -47,5 +75,10 @@ public class Client extends Thread
                 e.printStackTrace();
             }
         }
+    }
+
+    private class Player
+    {
+        
     }
 }

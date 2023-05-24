@@ -2,11 +2,12 @@ package Server;
 
 import java.net.ServerSocket;
 import java.util.HashMap;
+import java.util.List;
 import java.io.*;
 import java.net.*;
 
 public class Server {
-    private HashMap<String, Connection> connectionManager = new HashMap<>();
+    private List<Client> playerList;
     public static void main(String[] args) throws Exception
     {
         try (ServerSocket serverSocket = new ServerSocket(7777);
