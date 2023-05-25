@@ -1,21 +1,21 @@
 package Environment;
 
-public class Thing 
+public class GameObject 
 {
     private String name;
     private String desc;
     private String view;
 
-    public Thing(String name, String desc, String view)
+    public GameObject(String name, String desc, String view)
     {
         this.name = name;
         this.desc = desc;
         this.view = view;
     }
 
-    public Thing(){}
+    public GameObject(){}
 
-    public Thing(Thing other)
+    public GameObject(GameObject other)
     {
         name = other.getName();
         desc = other.getDesc();

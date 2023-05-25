@@ -1,13 +1,22 @@
 package Server;
 
 import java.net.ServerSocket;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import Commands.Command;
+
 import java.io.*;
 import java.net.*;
 
 public class Server {
     private List<Client> playerList;
+    private Map<String, Command> commandMap;
+
+    public Server()
+    {
+        
+    }
+
     public static void main(String[] args) throws Exception
     {
         try (ServerSocket serverSocket = new ServerSocket(7777);

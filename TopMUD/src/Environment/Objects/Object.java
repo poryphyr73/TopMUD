@@ -1,8 +1,8 @@
 package Environment.Objects;
 
-import Environment.Thing;
+import Environment.GameObject;
 
-public class Object extends Thing
+public class Object extends GameObject
 {
     
 }

@@ -1,8 +1,8 @@
 package Environment.Mobs;
 
-import Environment.Thing;
+import Environment.GameObject;
 
-public class Mob extends Thing
+public class Mob extends GameObject
 {
     
 }
