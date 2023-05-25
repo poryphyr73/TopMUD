@@ -1,12 +1,14 @@
 package Commands.Movement;
 
+import Commands.Command;
 import Environment.GameObject;
 
-public class MoveSouth implements Runnable
+public class MoveSouth implements Command
 {
+
     @Override
-    public void run() {
+    public void execute(GameObject other, String input) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'run'");
+        throw new UnsupportedOperationException("Unimplemented method 'execute'");
     }
 }
