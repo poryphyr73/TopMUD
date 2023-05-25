@@ -13,7 +13,7 @@ public class Client extends Thread
     private ConnectionStates cState;
 
     //runtime info
-    private String prompt, playerName, pass;
+    private String prompt;
     private int room, badPassCount;
     private boolean isClosing;
 

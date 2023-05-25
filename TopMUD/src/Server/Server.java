@@ -3,8 +3,10 @@ package Server;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import Commands.Command;
 import Environment.GameObject;
+import Environment.Mobs.Friendly.Player;
 
 import java.io.*;
 import java.net.*;
@@ -12,19 +14,22 @@ import java.net.*;
 public class Server {
     private List<Client> playerList;
     private List<Connection> connections;
+    private ConnectionHandler cManager;
     private Map<String, Command> commandMap;
-    private GameObject a = new GameObject("Dave", "This is dave", "I am dave");
 
     public Server()
     {
+        cManager = new ConnectionHandler();
         commandMap = new HashMap<String, Command>();
+
+        /*  GENERAL FORMAT FOR COMMAND INIT && CALL
         commandMap.put("n", (b)->b.getName());
         commandMap.put("m", (b)->b.getDesc());
         commandMap.put("s", (b)->b.getView());
         commandMap.get("n").execute(a);
         commandMap.get("m").execute(a);
         commandMap.get("s").execute(a);
-
+        */
     }
 
     public void start() throws IOException
@@ -33,7 +38,7 @@ public class Server {
         ) {
             while (true) {
                 Connection c = new Connection(serverSocket.accept());
-                connections.add(c);
+                cManager.connect(c);
                 c.start(); // starts respond to the client on another thread
             }
 
@@ -42,17 +47,39 @@ public class Server {
             System.exit(-1);
         }
     }
+    
+    private class ConnectionHandler
+    {
+        private List<Connection> connections;
 
-    private static class Connection extends Thread
+        public void connect(Connection c)
+        {
+            connections.add(c);
+        }
+
+        public void disconnect(int i)
+        {
+            connections.remove(i);
+        }
+
+        public void disconnect(Connection c)
+        {
+            connections.remove(connections.indexOf(c));
+        }
+    }
+
+    private class Connection extends Thread
     {
         private Socket s;
         private String ms;
         private String inms;
+        private Player thisPlayer;
         private Connection(Socket s) {this.s = s;}
 
         @Override
         public void run()
         {
+            
             while(true)
             {
                 try(
@@ -61,7 +88,7 @@ public class Server {
                 ){
                     while(!ms.equals("super_quit"))
                     {
-                        if(pendingMsg()) 
+                        if(pendingSend()) 
                         {
                             os.writeUTF(ms);
                             ms="";
@@ -75,6 +102,16 @@ public class Server {
                     os.close();
                 }catch(IOException e){
                     //TODO
+                }finally{
+                    try {
+                        FileOutputStream fos = new FileOutputStream(thisPlayer.getName().toLowerCase()+".player");
+                        ObjectOutputStream oos = new ObjectOutputStream(fos);
+                        oos.writeObject(this.thisPlayer);
+                        oos.flush();
+                        oos.close();
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    }
                 }
             }
         }
@@ -84,9 +121,19 @@ public class Server {
             ms = msg;
         }
 
-        private boolean pendingMsg()
+        private boolean pendingSend()
         {
             return !"".equals(ms);
+        }
+
+        public boolean pendingRecieve()
+        {
+            return !"".equals(inms);
+        }
+
+        public String getInMessage()
+        {
+            return inms;
         }
     }
 }
