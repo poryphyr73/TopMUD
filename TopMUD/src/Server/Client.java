@@ -17,9 +17,7 @@ public class Client extends Thread
     private int room, badPassCount;
     private boolean isClosing;
 
-    //buffered I/O messages
-    private String out;
-    private String in;
+    //I/O
     private static Scanner kb = new Scanner(System.in);
 
     Client(int _sock, int _port, String _ad)
@@ -79,5 +77,4 @@ public class Client extends Thread
 
     public int getSocket() {return sock;}
     public boolean isPlaying() {return cState == ConnectionStates.PLAYING && !isClosing;}
-    public boolean outputPending() {return !"".equals(out);}
 }

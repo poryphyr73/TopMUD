@@ -22,9 +22,9 @@ public class GameObject
         view = other.getView();
     }
 
-    public String getName(){return name;}
-    public String getDesc(){return desc;}
-    public String getView(){return view;}
+    public String getName(){System.out.println(name);return name;}
+    public String getDesc(){System.out.println(desc);return desc;}
+    public String getView(){System.out.println(view);return view;}
 
     public String toString()
     {
