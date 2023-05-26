@@ -4,5 +4,5 @@ import Environment.*;
 
 public interface Command 
 {
-    public void execute(GameObject other);
+    public void execute(GameObject executor, GameObject target, String arg);
 }
