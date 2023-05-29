@@ -130,8 +130,9 @@ public class Server {
                                 if("new".equals(attempt)) 
                                 {
                                     cs = ConnectionStates.AWAITING_NEW_NAME;
-                                    os.writeUTF("Test");
+                                    
                                 }
+                                
                                 
                                 else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
                                 {
@@ -167,19 +168,22 @@ public class Server {
                                 break;
                             
                             case AWAITING_NEW_NAME:
+                                os.writeUTF("hi");
+                                cs = ConnectionStates.PLAYING;
                                 break;
                             
                             case AWAITING_NEW_PASSWORD:
                                 break;
                             
                             case PLAYING:
+                                isLoggingIn = false;
                                 break;
                             
                             //Finish this login state machine. it sucks but just do better
                         }
                     }
-                    os.writeUTF("hi");
-                    while(!"super_quit".equals(ms))
+
+                    while(cs == ConnectionStates.PLAYING)
                     {
                         if(pendingSend()) 
                         {
