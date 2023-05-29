@@ -9,7 +9,6 @@ public enum ConnectionStates
     //Default on "new" from name
     AWAITING_NEW_NAME, //Enter new name until valid
     AWAITING_NEW_PASSWORD, //Enter new pass until valid
-    CONFIRM_PASSWORD, //Enter pass. If invalid, return to new pass
 
     PLAYING //Default state
 }

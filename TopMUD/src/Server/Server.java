@@ -1,14 +1,11 @@
 package Server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.monitor.GaugeMonitor;
-import javax.sql.rowset.serial.SerialException;
-
 import Commands.Command;
-import Environment.GameObject;
 import Environment.Mobs.Mob;
 import Environment.Mobs.Friendly.Player;
 
@@ -40,7 +37,7 @@ public class Server {
 
     public void start() throws IOException
     {
-        try (ServerSocket serverSocket = new ServerSocket(7777);
+        try (ServerSocket serverSocket = new ServerSocket(7778);
         ) {
             while (true) {
                 Connection c = new Connection(serverSocket.accept());
@@ -59,18 +56,25 @@ public class Server {
         private List<Connection> connections;
         private HashMap<Mob, String> commandStack;
 
+        public EventHandler()
+        {
+            connections = new ArrayList<Connection>();
+            commandStack = new HashMap<Mob, String>();
+        }
+
         public void run()
         {
-            if(commandStack.keySet().size() <= 0) return;
+            if(commandStack.keySet().size() > 0)
+            {
+                Mob executor = (Mob) commandStack.keySet().toArray()[0];
+                String current = commandStack.get(executor);
 
-            Mob executor = (Mob) commandStack.keySet().toArray()[0];
-            String current = commandStack.get(executor);
-
-            String[] args = current.split(" ", 3);
-            try{
-                commandMap.get(args[0]).execute(executor, executor.getRoom().getEntitiesByIndex(Integer.parseInt(args[1])), args[2]);
-            }catch(IOError e){
-                commandMap.get("ERROR").execute(executor, executor, current);
+                String[] args = current.split(" ", 3);
+                try{
+                    commandMap.get(args[0]).execute(executor, executor.getRoom().getEntitiesByIndex(Integer.parseInt(args[1])), args[2]);
+                }catch(IOError e){
+                    commandMap.get("ERROR").execute(executor, executor, current);
+                }
             }
         }
 
@@ -103,6 +107,7 @@ public class Server {
         private String inms;
         private Player thisPlayer;
         private Connection(Socket s) {this.s = s;}
+        private boolean isLoggingIn = true;
 
         @Override
         public void run()
@@ -114,7 +119,6 @@ public class Server {
                     DataInputStream is = new DataInputStream(s.getInputStream());
                     DataOutputStream os = new DataOutputStream(s.getOutputStream());
                 ){
-                    boolean isLoggingIn = true;
                     while(isLoggingIn)
                     {
                         switch(cs)
@@ -124,7 +128,10 @@ public class Server {
                                 String attempt = is.readUTF();
                                 File f;
                                 if("new".equals(attempt)) 
+                                {
                                     cs = ConnectionStates.AWAITING_NEW_NAME;
+                                    os.writeUTF("Test");
+                                }
                                 
                                 else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
                                 {
@@ -155,17 +162,24 @@ public class Server {
                                     cs = ConnectionStates.PLAYING;
         
                                 else
-                                    os.writeUTF("Invalid password - please try again!\n");
+                                    //os.writeUTF("Invalid password - please try again!\n");
+                                    isLoggingIn = false;
                                 break;
+                            
+                            case AWAITING_NEW_NAME:
+                                break;
+                            
+                            case AWAITING_NEW_PASSWORD:
+                                break;
+                            
+                            case PLAYING:
+                                break;
+                            
                             //Finish this login state machine. it sucks but just do better
-                            default:
-                                isLoggingIn = false;
-                            break;
                         }
-                        
                     }
-
-                    while(!ms.equals("super_quit"))
+                    os.writeUTF("hi");
+                    while(!"super_quit".equals(ms))
                     {
                         if(pendingSend()) 
                         {
@@ -205,7 +219,7 @@ public class Server {
 
         private boolean pendingSend()
         {
-            return !"".equals(ms);
+            return !("".equals(ms) || ms == null);
         }
 
         public String getInMessage()

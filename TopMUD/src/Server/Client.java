@@ -10,11 +10,9 @@ public class Client extends Thread
     private int port;
     private int sock;
     private String ad;
-    private ConnectionStates cState;
 
     //runtime info
-    private String prompt;
-    private int room, badPassCount;
+    private int room;
     private boolean isClosing;
 
     //I/O
@@ -23,21 +21,14 @@ public class Client extends Thread
     Client(int _sock, int _port, String _ad)
     {
         sock = _sock; port = _port; ad = _ad;
-        init();
-    }
-
-    private void init()
-    {
-        cState = ConnectionStates.AWAITNG_NAME;
-
         room = 1000;
-
-        prompt = "Enter username. Enter 'new' to create a new character ... ";
     }
+
+
     
     public static void main(String[] args) {
         try(
-            Socket s = new Socket("127.0.0.1", 7777);
+            Socket s = new Socket("127.0.0.1", 7778);
             DataInputStream is = new DataInputStream(s.getInputStream());
             DataOutputStream os = new DataOutputStream(s.getOutputStream());
         ){
@@ -67,8 +58,9 @@ public class Client extends Thread
         {
             try {
                 String rec;
-                while(true) if(!"".equals(rec = is.readUTF()))System.out.println(rec);
-            } catch (IOException e) {
+                rec = is.readUTF();
+                if(!"".equals(rec))System.out.println(rec);
+            } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
@@ -76,5 +68,4 @@ public class Client extends Thread
     }
 
     public int getSocket() {return sock;}
-    public boolean isPlaying() {return cState == ConnectionStates.PLAYING && !isClosing;}
 }
