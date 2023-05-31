@@ -129,8 +129,8 @@ public class Server {
             while(true)
             {
                 try(
-                    DataInputStream is = new DataInputStream(s.getInputStream());
-                    DataOutputStream os = new DataOutputStream(s.getOutputStream());
+                    BufferedReader is = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                    PrintWriter os = new PrintWriter(s.getOutputStream(), true);
                 ){
                     while(isLoggingIn)
                     {
@@ -138,32 +138,33 @@ public class Server {
                         switch(cs)
                         {
                             case AWAITING_NAME:
-                                os.writeUTF("Please input your username (\"new\" to generate a new character): ");
-
-                                    String attempt = is.readUTF();
-                                    File f;
-                                    if("new".equals(attempt)) 
-                                    {
-                                        cs = ConnectionStates.AWAITING_NEW_NAME;
-                                        LOGGER.log(Level.INFO, "new");
-                                    }
-                                        
-                                    else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
-                                    {
-                                        cs = ConnectionStates.AWAITING_PASSWORD;
-                                        try(FileInputStream fis = new FileInputStream(f);
-                                        ObjectInputStream ois = new ObjectInputStream(fis);)
-                                        {thisPlayer = (Player) ois.readObject();}catch(ClassNotFoundException e){}
-                                    }
+                                os.println("Please input your username (\"new\" to generate a new character): ");
+                                String attempt="";
+                                while("".equals(attempt)) attempt = is.readLine(); //WHATS HAPPENING HERE???
+                                File f;
+                                if("new".equals(attempt)) 
+                                {
+                                    cs = ConnectionStates.AWAITING_NEW_NAME;
+                                    LOGGER.log(Level.INFO, "new");
+                                }
+                                    
+                                else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
+                                {
+                                    cs = ConnectionStates.AWAITING_PASSWORD;
+                                    try(FileInputStream fis = new FileInputStream(f);
+                                    ObjectInputStream ois = new ObjectInputStream(fis);)
+                                    {thisPlayer = (Player) ois.readObject();}catch(ClassNotFoundException e){}
+                                }
             
-                                    else
-                                        os.writeUTF("Invalid username - please try again!\n");
+                                else
+                                    LOGGER.log(Level.WARNING, "Invalid user");
+                                    os.println("Invalid username - please try again!\n");
 
                                 break;
 
                             case AWAITING_PASSWORD:
-                                os.writeUTF("Please input your password (back to return): ");
-                                String pass = is.readUTF();
+                                os.println("Please input your password (back to return): ");
+                                String pass = is.readLine();
                                 if("back".equals(pass)) 
                                 {
                                     cs = ConnectionStates.AWAITING_NAME;
@@ -182,6 +183,7 @@ public class Server {
                                 break;
                             
                             case AWAITING_NEW_NAME:
+                                os.println("Awaiting name (bypass)");
                                 cs = ConnectionStates.PLAYING;
                                 break;
                             
@@ -200,13 +202,13 @@ public class Server {
                     {
                         if(pendingSend()) 
                         {
-                            os.writeUTF(ms);
+                            os.println(ms);
                             ms="";
                         }
 
-                        if("".equals(is.readUTF()))
+                        if("".equals(is.readLine()))
                         {
-                            System.out.println("From " + thisPlayer.getName() + ":: " + (inms = is.readUTF()));
+                            System.out.println("From " + thisPlayer.getName() + ":: " + (inms = is.readLine()));
                             cManager.addToStack(thisPlayer, inms);
                         }  
                     }

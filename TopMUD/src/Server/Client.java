@@ -25,8 +25,8 @@ public class Client extends Thread
     public static void main(String[] args) {
         try(
             Socket s = new Socket("127.0.0.1", 7778);
-            DataInputStream is = new DataInputStream(s.getInputStream());
-            DataOutputStream os = new DataOutputStream(s.getOutputStream());
+            BufferedReader is = new BufferedReader(new InputStreamReader(s.getInputStream()));
+            PrintWriter os = new PrintWriter(s.getOutputStream(), true);
         ){
             Listener lis = new Listener(is);
             lis.start();
@@ -34,7 +34,7 @@ public class Client extends Thread
             String ms = "";
             while(true){
                 ms = kb.nextLine();
-                try {os.writeUTF(ms);} catch (IOException e) {
+                try {os.println(ms);} catch (Exception e) {
                     // TODO
                     e.printStackTrace();
                     kb.close();
@@ -47,19 +47,20 @@ public class Client extends Thread
 
     private static class Listener extends Thread
     {
-        private DataInputStream is;
-        public Listener(DataInputStream is){this.is = is;}
+        private BufferedReader is;
+        public Listener(BufferedReader is){this.is = is;}
         @Override
         public void run()
         {
             try {
                 String rec;
-                rec = is.readUTF();
-                if(!"".equals(rec))System.out.println(rec);
+                rec = is.readLine();
+                while(!"".equals(rec)&&rec!=null)System.out.println(rec);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+            System.out.println("hi");
         }
     }
 
