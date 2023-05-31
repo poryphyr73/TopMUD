@@ -8,6 +8,7 @@ public class Launcher
         Server s = new Server();
         try {
             s.start();
+            System.exit(0);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

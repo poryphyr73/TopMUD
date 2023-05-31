@@ -10,6 +10,8 @@ import Environment.Mobs.Mob;
 import Environment.Mobs.Friendly.Player;
 
 import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.net.*;
 import java.nio.file.FileAlreadyExistsException;
 
@@ -17,6 +19,7 @@ public class Server {
     private List<Client> playerList;
     private static EventHandler cManager;
     private Map<String, Command> commandMap;
+    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
     public Server()
     {
@@ -37,15 +40,19 @@ public class Server {
 
     public void start() throws IOException
     {
+        LOGGER.log(Level.INFO, "Server starting...");
         try (ServerSocket serverSocket = new ServerSocket(7778);
         ) {
             while (true) {
                 Connection c = new Connection(serverSocket.accept());
                 cManager.connect(c);
                 c.start(); // starts respond to the client on another thread
+
+                LOGGER.log(Level.INFO, "New connection started...");
             }
 
         } catch(IOException e) {
+            LOGGER.log(Level.SEVERE, "Error on server start", e);
             e.printStackTrace();
             System.exit(-1);
         }
@@ -76,6 +83,11 @@ public class Server {
                     commandMap.get("ERROR").execute(executor, executor, current);
                 }
             }
+        }
+
+        public List<Connection> getConnections()
+        {
+            return connections;
         }
 
         public void connect(Connection c)
@@ -112,6 +124,7 @@ public class Server {
         @Override
         public void run()
         {
+            LOGGER.log(Level.INFO, "Connection thread running...");
             //SPECIFY DIRECTORY FOR FILEPATH???
             while(true)
             {
@@ -121,29 +134,30 @@ public class Server {
                 ){
                     while(isLoggingIn)
                     {
+                        LOGGER.log(Level.INFO, "Waiting for login");
                         switch(cs)
                         {
                             case AWAITING_NAME:
                                 os.writeUTF("Please input your username (\"new\" to generate a new character): ");
-                                String attempt = is.readUTF();
-                                File f;
-                                if("new".equals(attempt)) 
-                                {
-                                    cs = ConnectionStates.AWAITING_NEW_NAME;
-                                    
-                                }
-                                
-                                
-                                else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
-                                {
-                                    cs = ConnectionStates.AWAITING_PASSWORD;
-                                    try(FileInputStream fis = new FileInputStream(f);
-                                    ObjectInputStream ois = new ObjectInputStream(fis);)
-                                    {thisPlayer = (Player) ois.readObject();}catch(ClassNotFoundException e){}
-                                }
-        
-                                else
-                                    os.writeUTF("Invalid username - please try again!\n");
+
+                                    String attempt = is.readUTF();
+                                    File f;
+                                    if("new".equals(attempt)) 
+                                    {
+                                        cs = ConnectionStates.AWAITING_NEW_NAME;
+                                        LOGGER.log(Level.INFO, "new");
+                                    }
+                                        
+                                    else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
+                                    {
+                                        cs = ConnectionStates.AWAITING_PASSWORD;
+                                        try(FileInputStream fis = new FileInputStream(f);
+                                        ObjectInputStream ois = new ObjectInputStream(fis);)
+                                        {thisPlayer = (Player) ois.readObject();}catch(ClassNotFoundException e){}
+                                    }
+            
+                                    else
+                                        os.writeUTF("Invalid username - please try again!\n");
 
                                 break;
 
@@ -168,7 +182,6 @@ public class Server {
                                 break;
                             
                             case AWAITING_NEW_NAME:
-                                os.writeUTF("hi");
                                 cs = ConnectionStates.PLAYING;
                                 break;
                             
@@ -201,6 +214,7 @@ public class Server {
                     is.close();
                     os.close();
                 }catch(IOException e){
+                    LOGGER.log(Level.SEVERE, "Error in connection thread", e);
                     //TODO
                 }finally{
                     try {
@@ -210,6 +224,7 @@ public class Server {
                         oos.flush();
                         oos.close();
                     } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Error finalizing connection thread", e);
                         // TODO: handle exception
                     }
                 }

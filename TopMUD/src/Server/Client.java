@@ -12,7 +12,6 @@ public class Client extends Thread
     private String ad;
 
     //runtime info
-    private int room;
     private boolean isClosing;
 
     //I/O
@@ -21,10 +20,7 @@ public class Client extends Thread
     Client(int _sock, int _port, String _ad)
     {
         sock = _sock; port = _port; ad = _ad;
-        room = 1000;
     }
-
-
     
     public static void main(String[] args) {
         try(
