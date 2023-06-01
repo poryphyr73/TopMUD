@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.net.*;
 import java.nio.file.FileAlreadyExistsException;
+import java.time.LocalDateTime;
 
 public class Server {
     private List<Client> playerList;
@@ -140,7 +141,8 @@ public class Server {
                             case AWAITING_NAME:
                                 os.println("Please input your username (\"new\" to generate a new character): ");
                                 String attempt="";
-                                while("".equals(attempt)) attempt = is.readLine(); //WHATS HAPPENING HERE???
+                                while("".equals(attempt)||null==attempt) attempt = is.readLine(); //WHATS HAPPENING HERE???
+                                LOGGER.log(Level.INFO, attempt);
                                 File f;
                                 if("new".equals(attempt)) 
                                 {
@@ -197,7 +199,7 @@ public class Server {
                             //Finish this login state machine. it sucks but just do better
                         }
                     }
-
+                    LOGGER.log(Level.INFO, "Player "+thisPlayer.getName()+" logged::"+LocalDateTime.now());
                     while(cs == ConnectionStates.PLAYING)
                     {
                         if(pendingSend()) 
@@ -208,7 +210,7 @@ public class Server {
 
                         if("".equals(is.readLine()))
                         {
-                            System.out.println("From " + thisPlayer.getName() + ":: " + (inms = is.readLine()));
+                            LOGGER.log(Level.INFO, "From " + thisPlayer.getName() + "::" + (inms = is.readLine()));
                             cManager.addToStack(thisPlayer, inms);
                         }  
                     }
@@ -231,6 +233,11 @@ public class Server {
                     }
                 }
             }
+        }
+
+        private void login()
+        {
+            
         }
 
         public void outMessage(String msg)

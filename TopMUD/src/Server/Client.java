@@ -54,8 +54,11 @@ public class Client extends Thread
         {
             try {
                 String rec;
-                rec = is.readLine();
-                while(!"".equals(rec)&&rec!=null)System.out.println(rec);
+                while(true)
+                {
+                    rec = is.readLine();
+                    System.out.println(rec);
+                }
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
