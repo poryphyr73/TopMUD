@@ -148,6 +148,7 @@ public class Server {
                                 {
                                     cs = ConnectionStates.AWAITING_NEW_NAME;
                                     LOGGER.log(Level.INFO, "new");
+                                    break;
                                 }
                                     
                                 else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+attempt.toLowerCase()+".player")).isFile()) 
@@ -156,6 +157,7 @@ public class Server {
                                     try(FileInputStream fis = new FileInputStream(f);
                                     ObjectInputStream ois = new ObjectInputStream(fis);)
                                     {thisPlayer = (Player) ois.readObject();}catch(ClassNotFoundException e){}
+                                    break;
                                 }
             
                                 else
@@ -222,11 +224,11 @@ public class Server {
                     //TODO
                 }finally{
                     try {
-                        FileOutputStream fos = new FileOutputStream(thisPlayer.getName().toLowerCase()+".player");
-                        ObjectOutputStream oos = new ObjectOutputStream(fos);
-                        oos.writeObject(this.thisPlayer);
-                        oos.flush();
-                        oos.close();
+                        //FileOutputStream fos = new FileOutputStream(thisPlayer.getName().toLowerCase()+".player");
+                        //ObjectOutputStream oos = new ObjectOutputStream(fos);
+                        //oos.writeObject(this.thisPlayer);
+                        //oos.flush();
+                        //oos.close();
                     } catch (Exception e) {
                         LOGGER.log(Level.SEVERE, "Error finalizing connection thread", e);
                         // TODO: handle exception

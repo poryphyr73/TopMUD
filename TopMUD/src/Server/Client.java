@@ -57,7 +57,7 @@ public class Client extends Thread
                 while(true)
                 {
                     rec = is.readLine();
-                    System.out.println(rec);
+                    if(rec!=null)System.out.println(rec);
                 }
             } catch (Exception e) {
                 // TODO Auto-generated catch block
