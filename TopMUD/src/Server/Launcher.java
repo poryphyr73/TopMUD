@@ -5,7 +5,7 @@ import java.io.IOException;
 public class Launcher
 {
     public static void main(String[] args) {
-        Server s = new Server();
+        Server s = new Server(args[0]);
         try {
             s.start();
             System.exit(0);

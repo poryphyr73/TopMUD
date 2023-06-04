@@ -1,11 +1,9 @@
 package Environment.Mobs;
 
-import java.io.Serializable;
-
 import Environment.GameObject;
 import Environment.World.Room;
 
-public class Mob extends GameObject implements Serializable
+public class Mob extends GameObject
 {
     private Room room;
 
