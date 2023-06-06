@@ -201,11 +201,11 @@ public class Server {
                         case AWAITING_NEW_PASSWORD:
                             checkNewPass(input);
                             break;
-
+                        /*
                         case AWAITING_NEW_CHARACTER:
                             checkNewCharacter(input);
                             break;
-
+                         */
                         default:
                             LOGGER.log(Level.WARNING, "Current thread error. Closing...");
                             savePlayer();
@@ -224,19 +224,15 @@ public class Server {
 
         private void savePlayer()
         {
-            try {
-                saveFile(thisPlayer, SAVE_DIR+"Users\\"+thisPlayer.getName().toLowerCase()+".player");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            saveFile(thisPlayer, SAVE_DIR+"Users\\"+thisPlayer.getName().toLowerCase()+".player");
         }
 
         private void saveAndQuit() throws IOException
         {
             savePlayer();
+            s.close();
             is.close();
             os.close();
-            s.close();
         }
 
         private void checkUser(String input) throws FileNotFoundException, IOException, ClassNotFoundException
@@ -274,17 +270,16 @@ public class Server {
             if("back".equals(input)) 
             {
                 cs = ConnectionStates.AWAITING_NAME;
-                FileOutputStream fos = new FileOutputStream(thisPlayer.getName().toLowerCase()+".player");
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
-                    oos.writeObject(this.thisPlayer);
-                    oos.flush();
-                    oos.close();
-                    fos.close();
+                savePlayer();
+                thisPlayer = null;
             }
         
             else if(input.equals(thisPlayer.getPassword()))
-                {LOGGER.log(Level.INFO, "Player "+thisPlayer.getName()+" logged::"+LocalDateTime.now());
-                cs = ConnectionStates.PLAYING;}
+            {
+                LOGGER.log(Level.INFO, "Player "+thisPlayer.getName()+" logged::"+LocalDateTime.now());
+                cs = ConnectionStates.PLAYING;
+                os.println("Welcome! Press enter to continue.");
+            }
         
             else
                 os.println("Invalid password - please try again!\n");
@@ -316,8 +311,9 @@ public class Server {
         {
             thisPlayer.setPassword(input);
             os.println("Save for later - NAME: "+thisPlayer.getName()+", PASS: "+thisPlayer.getPassword());
-            os.println("Pick a class for your character: [F]ighter, [T]hief, [R]anger");
-            cs=ConnectionStates.AWAITING_NEW_CHARACTER;
+            os.println("Welcome! Press enter to continue.");
+            savePlayer();
+            cs=ConnectionStates.PLAYING;
         }
 
         private void checkNewCharacter(String input)
@@ -381,16 +377,15 @@ public class Server {
             }
         });
 
-        commandMap.put("inv", (player, args)->
-        {
-            //cManager.getConnection(cManager.getIndexByPlayer((Player) player)).outMessage(((Player) player).getInventory());
-        });
+        commandMap.put("inv", (player, args)-> cManager.getConnectionByPlayer((Player) player).outMessage(((Player) player).getInventory()));
 
         commandMap.put("oppme", (player, args) -> ((Player) player).op(true));
 
         commandMap.put("deoppme", (player, args) -> ((Player) player).op(false));
 
         commandMap.put("move", (player, args) -> {});
+
+        commandMap.put("save", (player, args) -> {cManager.getConnectionByPlayer((Player) player).savePlayer();});
     }
 
     private void loadWorld(String toLoad) 
@@ -399,37 +394,38 @@ public class Server {
         if((f = new File(SAVE_DIR+"World\\"+toLoad+".world")).isFile())
         {
             LOGGER.log(Level.INFO, "World "+toLoad+" found. Loading...");
-            try {
-                loadedWorld = (World) loadFile(f);
-            } catch (ClassNotFoundException | IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            loadedWorld = (World) loadFile(f);
         }
         else 
         {
             loadedWorld = new World(toLoad, 10, 10);
-            loadedWorld.save(SAVE_DIR);
+            saveFile(loadedWorld, SAVE_DIR+"World\\"+toLoad+".world");
             LOGGER.log(Level.INFO, "Could not find desired file. Created new world "+toLoad);
         }
     }
 
-    private static Object loadFile(File f) throws IOException, ClassNotFoundException
+    private static Object loadFile(File f)
     {
-        FileInputStream fis = new FileInputStream(f);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-                Object o = ois.readObject();
-                ois.close();
-                fis.close();
-        return o;
+        try (FileInputStream fis = new FileInputStream(f); ObjectInputStream ois = new ObjectInputStream(fis)) {
+                    Object o = ois.readObject();
+                    ois.close();
+                    fis.close();
+            return o;
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    private static void saveFile(Object o, String path) throws IOException
+    private static void saveFile(Object o, String path)
     {
-        FileOutputStream fos = new FileOutputStream(path);
-        ObjectOutputStream oos = new ObjectOutputStream(fos);
-        oos.writeObject(o);
-        oos.flush();
-        oos.close();
+        try (FileOutputStream fos = new FileOutputStream(path); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(o);
+            oos.flush();
+            oos.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }

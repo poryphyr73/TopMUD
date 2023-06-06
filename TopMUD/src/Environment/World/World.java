@@ -16,20 +16,6 @@ public class World implements Serializable
         name = _name;
     }
 
-    public void save(String path)
-    {
-        try {
-            FileOutputStream fos = new FileOutputStream(path+name.toLowerCase()+".player");
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(this);
-            oos.flush();
-            oos.close();
-        } catch (Exception e) {
-            Server.getLogger().log(Level.WARNING, "Could not save map:: "+name);
-            // TODO: handle exception
-        }
-    }
-
     public void writeRoom(Room toAdd, int row, int col)
     {
         level[row][col] = toAdd;
