@@ -7,20 +7,10 @@ import java.util.Scanner;
 public class Client extends Thread
 {
     //info of the player's connection
-    private int port;
     private int sock;
-    private String ad;
-
-    //runtime info
-    private boolean isClosing;
 
     //I/O
     private static Scanner kb = new Scanner(System.in);
-
-    Client(int _sock, int _port, String _ad)
-    {
-        sock = _sock; port = _port; ad = _ad;
-    }
     
     public static void main(String[] args) {
         try(

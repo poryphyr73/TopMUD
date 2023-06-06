@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import Commands.Command;
-import Environment.GameObject;
 import Environment.Mobs.Mob;
 import Environment.Mobs.Friendly.Player;
+import Environment.World.World;
 
 import java.io.*;
 import java.util.logging.Level;
@@ -18,38 +18,21 @@ import java.nio.file.FileAlreadyExistsException;
 import java.time.LocalDateTime;
 
 public class Server {
-    private List<Client> playerList;
     private EventHandler cManager;
-    private Map<String, Command> commandMap;
+    private static World loadedWorld;
+    private static Map<String, Command> commandMap;
     private static String SAVE_DIR;
     private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
-    public Server(String dir)
+    public Server(String dir, String toLoad)
     {
         SAVE_DIR = dir+"\\";
         LOGGER.log(Level.INFO, SAVE_DIR);
         cManager = new EventHandler();
         cManager.start();
         commandMap = new HashMap<String, Command>();
-
-        /*   //GENERAL FORMAT FOR COMMAND INIT && CALL
-        commandMap.put("n", (c)->
-        {
-            if(c.getClass().equals(Player.class)) c.getName();
-            else c.getDesc();
-        });
-        commandMap.get("n").execute(a);
-        commandMap.get("n").execute(b);
-        */
-        commandMap.put("quit", (player, args)->
-        {
-            try {cManager.disconnect(cManager.getIndexByPlayer((Player) player));} catch (IOException e) {e.printStackTrace();}
-        });
-
-        commandMap.put("inv", (player, args)->
-        {
-            //cManager.getConnection(cManager.getIndexByPlayer((Player) player)).outMessage(((Player) player).getInventory());
-        });
+        commandsInit();
+        loadWorld(toLoad);
     }
 
     public void start() throws IOException
@@ -72,6 +55,10 @@ public class Server {
             System.exit(-1);
         }
     }
+
+    public static Logger getLogger(){return LOGGER;}
+
+    public static World getWorld(){return loadedWorld;}
     
     private class EventHandler extends Thread
     {
@@ -91,7 +78,7 @@ public class Server {
             while(isRunning)
             {
                 try {Thread.sleep(100);} catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
+                    LOGGER.log(Level.WARNING, "Failed to sleep.");
                     e.printStackTrace();
                 }
 
@@ -116,7 +103,6 @@ public class Server {
                     }
 
                     else LOGGER.log(Level.WARNING, "Invalid command syntax::"+current);
-                    
 
                     commandStack.remove(executor);
                 }
@@ -149,10 +135,14 @@ public class Server {
             for(int i = 0; i < connections.size(); i++) if(player.equals(connections.get(i).getPlayer()))  return i;
             return -1;
         }
+        
+        public Connection getConnectionByPlayer(Player player)
+        {
+            return connections.get(getIndexByPlayer(player));
+        }
 
         public void disconnect(int i) throws IOException
         {
-            connections.get(i).getSocket().close();
             connections.get(i).saveAndQuit();
             connections.remove(i);
         }
@@ -218,7 +208,7 @@ public class Server {
 
                         default:
                             LOGGER.log(Level.WARNING, "Current thread error. Closing...");
-                            save();
+                            savePlayer();
                             break;
                     }
                 }
@@ -226,29 +216,24 @@ public class Server {
                 while(cs == ConnectionStates.PLAYING) playing();
 
             } catch (ClassNotFoundException | IOException e) {
-                // TODO Auto-generated catch block
+                LOGGER.log(Level.FINER, "Connection Closing.");
                 e.printStackTrace();
-                save();
+                savePlayer();
             }
         }
 
-        private void save()
+        private void savePlayer()
         {
             try {
-                FileOutputStream fos = new FileOutputStream(SAVE_DIR+thisPlayer.getName().toLowerCase()+".player");
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
-                oos.writeObject(this.thisPlayer);
-                oos.flush();
-                oos.close();
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error finalizing connection thread", e);
-                // TODO: handle exception
+                saveFile(thisPlayer, SAVE_DIR+"Users\\"+thisPlayer.getName().toLowerCase()+".player");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
         private void saveAndQuit() throws IOException
         {
-            save();
+            savePlayer();
             is.close();
             os.close();
             s.close();
@@ -265,7 +250,7 @@ public class Server {
                 os.println("Please enter a name for your new character (\"back\" to return):");
             }
                                     
-            else if((f = new File(SAVE_DIR+input.toLowerCase()+".player")).isFile()) 
+            else if((f = new File(SAVE_DIR+"Users\\"+input.toLowerCase()+".player")).isFile()) 
             {
                 cs = ConnectionStates.AWAITING_PASSWORD;
                 FileInputStream fis = new FileInputStream(f);
@@ -307,15 +292,13 @@ public class Server {
 
         private void checkNewName(String input)
         {
-            File f;
-            
             if("back".equals(input)) 
             {
                 cs = ConnectionStates.AWAITING_NAME;
                 os.println("Please input your username (\"new\" to generate a new character): ");
             }   
 
-            else if((f = new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+input.toLowerCase()+".player")).isFile())
+            else if((new File("C:\\Users\\Toppe\\Documents\\GitHub\\TopMUD\\TopMUD\\rsc\\Users\\"+input.toLowerCase()+".player")).isFile())
             {
                 os.println("Character already exists.");
                 checkNewName("back");
@@ -339,7 +322,7 @@ public class Server {
 
         private void checkNewCharacter(String input)
         {
-            save();
+            savePlayer();
             cs=ConnectionStates.PLAYING;
         }
 
@@ -385,5 +368,68 @@ public class Server {
         {
             return s;
         }
+    }
+
+    private void commandsInit()
+    {
+        commandMap.put("quit", (player, args)-> {
+            try {
+                cManager.disconnect(cManager.getIndexByPlayer((Player) player));
+            } 
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        commandMap.put("inv", (player, args)->
+        {
+            //cManager.getConnection(cManager.getIndexByPlayer((Player) player)).outMessage(((Player) player).getInventory());
+        });
+
+        commandMap.put("oppme", (player, args) -> ((Player) player).op(true));
+
+        commandMap.put("deoppme", (player, args) -> ((Player) player).op(false));
+
+        commandMap.put("move", (player, args) -> {});
+    }
+
+    private void loadWorld(String toLoad) 
+    {
+        File f;
+        if((f = new File(SAVE_DIR+"World\\"+toLoad+".world")).isFile())
+        {
+            LOGGER.log(Level.INFO, "World "+toLoad+" found. Loading...");
+            try {
+                loadedWorld = (World) loadFile(f);
+            } catch (ClassNotFoundException | IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        else 
+        {
+            loadedWorld = new World(toLoad, 10, 10);
+            loadedWorld.save(SAVE_DIR);
+            LOGGER.log(Level.INFO, "Could not find desired file. Created new world "+toLoad);
+        }
+    }
+
+    private static Object loadFile(File f) throws IOException, ClassNotFoundException
+    {
+        FileInputStream fis = new FileInputStream(f);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+                Object o = ois.readObject();
+                ois.close();
+                fis.close();
+        return o;
+    }
+
+    private static void saveFile(Object o, String path) throws IOException
+    {
+        FileOutputStream fos = new FileOutputStream(path);
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(o);
+        oos.flush();
+        oos.close();
     }
 }

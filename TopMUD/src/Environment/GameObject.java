@@ -37,6 +37,6 @@ public class GameObject implements Serializable
 
     public String toString()
     {
-        return "A "+name+"; "+view;
+        return name+"\n"+view;
     }
 }
