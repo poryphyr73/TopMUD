@@ -45,10 +45,20 @@ public class Player extends Mob
 
     public void op(boolean isOp) {this.isOp = isOp;}
 
-    public void move(int x, int y)
+    public void move(int x, int y, int[] limit)
     {
         xpos += x;
         ypos += y;
+
+        if(xpos < 0) xpos = 0;
+        if(ypos < 0) ypos = 0;
+        if(ypos > limit[0]) ypos = limit[0];
+        if(xpos > limit[1]) xpos = limit[1];
+    }
+
+    public int[] getPosition()
+    {
+        return new int[]{ypos, xpos};
     }
 
     public void updateHealth(int k)

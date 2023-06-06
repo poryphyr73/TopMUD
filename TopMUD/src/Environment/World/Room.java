@@ -1,13 +1,19 @@
 package Environment.World;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import Environment.GameObject;
 
-public class Room implements Serializable
+public class Room extends GameObject
 {
     private List<GameObject> entities;
+
+    public Room()
+    {
+        entities = new ArrayList<GameObject>();
+    }
 
     public GameObject getEntitiesByIndex(int i)
     {
@@ -16,7 +22,10 @@ public class Room implements Serializable
 
     public void addEntity(GameObject toAdd)
     {
-
+        if(!toAdd.getClass().equals(Room.class))
+        {
+            entities.add(toAdd);
+        }
     }
 
     public String toString()

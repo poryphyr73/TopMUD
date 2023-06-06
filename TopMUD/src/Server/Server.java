@@ -50,6 +50,7 @@ public class Server {
 
         } catch(IOException e) {
             LOGGER.log(Level.SEVERE, "Error on server start", e);
+            saveFile(loadedWorld, SAVE_DIR+"World\\"+loadedWorld.getName()+".world");
             cManager.stopRunning();
             e.printStackTrace();
             System.exit(-1);
@@ -114,11 +115,6 @@ public class Server {
             isRunning = false;
         }
 
-        public List<Connection> getConnections()
-        {
-            return connections;
-        }
-
         public void connect(Connection c)
         {
             connections.add(c);
@@ -130,26 +126,36 @@ public class Server {
             LOGGER.log(Level.INFO,"adding to stack "+toCall+". Stack is now length "+commandStack.size());
         }
 
-        public int getIndexByPlayer(Player player)
+        public int getIndex(String name)
         {
-            for(int i = 0; i < connections.size(); i++) if(player.equals(connections.get(i).getPlayer()))  return i;
+            for(int i = 0; i < connections.size(); i++) if(name.equals(connections.get(i).getPlayer().getName())) return i;
             return -1;
         }
-        
-        public Connection getConnectionByPlayer(Player player)
+
+        public int getIndex(Player player)
         {
-            return connections.get(getIndexByPlayer(player));
+            for(int i = 0; i < connections.size(); i++) if(player.equals(connections.get(i).getPlayer())) return i;
+            return -1;
+        }
+
+        public Connection getConnection(String name)
+        {
+            int i = getIndex(name);
+            if(i>=0) return connections.get(i);
+            return null;
+        }
+        
+        public Connection getConnection(Player player)
+        {   
+            int i = getIndex(player);
+            if(i>=0) return connections.get(i);
+            return null;
         }
 
         public void disconnect(int i) throws IOException
         {
             connections.get(i).saveAndQuit();
             connections.remove(i);
-        }
-
-        public Connection getConnection(int index)
-        {
-            return connections.get(index);
         }
     }
 
@@ -202,10 +208,10 @@ public class Server {
                             checkNewPass(input);
                             break;
                         /*
-                        case AWAITING_NEW_CHARACTER:
+                        case AWAITING_NEW_CHARACTER: This state is unused. During further development, add a character creator by classes
                             checkNewCharacter(input);
                             break;
-                         */
+                         */ 
                         default:
                             LOGGER.log(Level.WARNING, "Current thread error. Closing...");
                             savePlayer();
@@ -272,6 +278,7 @@ public class Server {
                 cs = ConnectionStates.AWAITING_NAME;
                 savePlayer();
                 thisPlayer = null;
+                os.println("Please input your username (\"new\" to generate a new character): ");
             }
         
             else if(input.equals(thisPlayer.getPassword()))
@@ -316,11 +323,13 @@ public class Server {
             cs=ConnectionStates.PLAYING;
         }
 
+        /* This is the method for handling the unused character creator
         private void checkNewCharacter(String input)
         {
             savePlayer();
             cs=ConnectionStates.PLAYING;
         }
+         */
 
         private void playing() throws IOException
         {
@@ -355,11 +364,6 @@ public class Server {
             return !("".equals(ms) || ms == null);
         }
 
-        public String getInMessage()
-        {
-            return inms;
-        }
-
         public Socket getSocket() 
         {
             return s;
@@ -370,24 +374,44 @@ public class Server {
     {
         commandMap.put("quit", (player, args)-> {
             try {
-                cManager.disconnect(cManager.getIndexByPlayer((Player) player));
+                cManager.disconnect(cManager.getIndex((Player) player));
             } 
             catch (IOException e) {
                 e.printStackTrace();
             }
         });
 
-        commandMap.put("inv", (player, args)-> cManager.getConnectionByPlayer((Player) player).outMessage(((Player) player).getInventory()));
+        commandMap.put("inv", (player, args)-> cManager.getConnection((Player) player).outMessage(((Player) player).getInventory()));
 
-        commandMap.put("oppme", (player, args) -> ((Player) player).op(true));
+        commandMap.put("op", (player, args) -> {
+            if(args[0] == null)((Player) player).op(true);
+            else if(cManager.getConnection(args[0]) != null) cManager.getConnection(args[0]).getPlayer().op(true);
+            else cManager.getConnection((Player) player).outMessage("Could not find player");
+        });
 
-        commandMap.put("deoppme", (player, args) -> ((Player) player).op(false));
+        commandMap.put("deop", (player, args) -> ((Player) player).op(false));
 
-        commandMap.put("move", (player, args) -> {});
+        commandMap.put("move", (player, args) -> {
+                if("n".equals(args[0])) ((Player) player).move(0, -1, loadedWorld.getLimit());
+           else if("e".equals(args[0])) ((Player) player).move(1, 0, loadedWorld.getLimit());
+           else if("s".equals(args[0])) ((Player) player).move(0, 1, loadedWorld.getLimit());
+           else if("w".equals(args[0])) ((Player) player).move(-1, 0, loadedWorld.getLimit());
+            else cManager.getConnection((Player) player).outMessage("Invalid direction. Valid: [n, e, s, w]");
+        });
 
-        commandMap.put("save", (player, args) -> {cManager.getConnectionByPlayer((Player) player).savePlayer();});
+        commandMap.put("look", (player, args) -> {
+            loadedWorld.getRoom(((Player) player).getPosition()).getView();
+        });
+
+        commandMap.put("save", (player, args) -> {cManager.getConnection((Player) player).savePlayer();});
+
+        commandMap.put("help", (player, args) -> {
+            String ret = "Valid command list: \n";
+            for (String s : commandMap.keySet()) ret += s + "\n";
+            cManager.getConnection((Player) player).outMessage(ret);
+        });
     }
-
+    
     private void loadWorld(String toLoad) 
     {
         File f;

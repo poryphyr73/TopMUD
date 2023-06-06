@@ -1,9 +1,6 @@
 package Environment.World;
 import java.io.*;
 import java.io.Serializable;
-import java.util.logging.Level;
-
-import Server.Server;
 
 public class World implements Serializable
 {
@@ -24,6 +21,21 @@ public class World implements Serializable
     public void writeRoom(File getFrom, int row, int col)
     {
         //TODO
+    }
+
+    public Room getRoom(int[] coords)
+    {
+        return level[coords[0]][coords[1]];
+    }
+
+    public int[] getLimit()
+    {
+        return new int[]{level.length - 1, level[0].length - 1};
+    }
+
+    public String getName()
+    {
+        return name;
     }
 
     public String toString()
