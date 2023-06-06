@@ -14,7 +14,7 @@ public class Client extends Thread
     
     public static void main(String[] args) {
         try(
-            Socket s = new Socket("127.0.0.1", 7778);
+            Socket s = new Socket(args[0], 7778);
             BufferedReader is = new BufferedReader(new InputStreamReader(s.getInputStream()));
             PrintWriter os = new PrintWriter(s.getOutputStream(), true);
         ){
@@ -32,6 +32,7 @@ public class Client extends Thread
             }
         }catch(IOException e) {
             //TODO
+            e.printStackTrace();
         }
     }
 
