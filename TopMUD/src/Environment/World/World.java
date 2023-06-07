@@ -33,6 +33,11 @@ public class World implements Serializable
         return new int[]{level.length - 1, level[0].length - 1};
     }
 
+    public boolean isValidPosition(int[] coords)
+    {
+        return coords[0] <= getLimit()[0] && coords[1] <= getLimit()[1] && coords[0] >= 0 && coords[1] >= 0;
+    }
+
     public String getName()
     {
         return name;

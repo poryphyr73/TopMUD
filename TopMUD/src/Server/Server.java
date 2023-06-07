@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import Commands.Command;
+import Environment.GameObject;
 import Environment.Mobs.Mob;
 import Environment.Mobs.Friendly.Player;
+import Environment.World.Room;
 import Environment.World.World;
 
 import java.io.*;
@@ -64,48 +66,48 @@ public class Server {
     private class EventHandler extends Thread
     {
         private List<Connection> connections;
-        private HashMap<Mob, String> commandStack;
+        private HashMap<Mob, List<String>> commandStack;
         private boolean isRunning;
 
-        public EventHandler()
-        {
-            connections = new ArrayList<Connection>();
-            commandStack = new HashMap<Mob, String>();
-            isRunning = true;
+        public EventHandler() {
+        connections = new ArrayList<Connection>();
+        commandStack = new HashMap<Mob, List<String>>();
+        isRunning = true;
         }
 
-        public void run()
-        {
-            while(isRunning)
-            {
-                try {Thread.sleep(100);} catch (InterruptedException e) {
-                    LOGGER.log(Level.WARNING, "Failed to sleep.");
+        public void run() {
+            while (isRunning) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    LOGGER.log(Level.WARNING, "Failed to sleep.", e);
                     e.printStackTrace();
                 }
-
-                if(!commandStack.isEmpty())
-                {
-                    Map.Entry<Mob, String> entry = commandStack.entrySet().iterator().next();
-                    Mob executor = entry.getKey();
-                    String current = entry.getValue();
-                    
-                    LOGGER.log(Level.INFO,"Handling command "+current);
-
-                    String[] args = current.split(" ", 2);
-                    if(args.length < 2) args = new String[]{args[0],""};
-
-                    if(commandMap.get(args[0]) != null)
-                    {
-                        try{
-                            commandMap.get(args[0]).execute(executor, args[1].split(""));
-                        }catch(IOError e){
-                            LOGGER.log(Level.WARNING, "Invalid command syntax::"+current);
+    
+                if (!commandStack.isEmpty()) {
+                    List<Map.Entry<Mob, List<String>>> entriesToRemove = new ArrayList<>();
+    
+                    for (Map.Entry<Mob, List<String>> entry : commandStack.entrySet()) {
+                        Mob executor = entry.getKey();
+                        List<String> commands = entry.getValue();
+    
+                        for (String current : commands) {
+                            LOGGER.log(Level.INFO, "Handling command " + current);
+    
+                            String[] args = current.split(" ", 2);
+    
+                            if (commandMap.containsKey(args[0]))
+                                commandMap.get(args[0]).execute(executor, args[1].split(""));
+                            else
+                                LOGGER.log(Level.WARNING, "Invalid command syntax::" + current);
                         }
+    
+                        entriesToRemove.add(entry);
                     }
-
-                    else LOGGER.log(Level.WARNING, "Invalid command syntax::"+current);
-
-                    commandStack.remove(executor);
+    
+                    for (Map.Entry<Mob, List<String>> entry : entriesToRemove) {
+                        commandStack.remove(entry.getKey());
+                    }
                 }
             }
         }
@@ -120,10 +122,23 @@ public class Server {
             connections.add(c);
         }
 
-        public void addToStack(Mob other, String toCall)
-        {
-            commandStack.put(other, toCall);
-            LOGGER.log(Level.INFO,"adding to stack "+toCall+". Stack is now length "+commandStack.size());
+        public void addToStack(Mob other, String toCall) {
+            /* 
+            List<String> commands = commandStack.getOrDefault(other, new ArrayList<>());
+            commands.add(toCall);
+            commandStack.put(other, commands);
+            LOGGER.log(Level.INFO, "adding to stack " + toCall + ". Stack is now length " + commands.size());
+            
+            */
+            LOGGER.log(Level.INFO, "Handling command " + toCall);
+    
+            String[] args = toCall.split(" ", 2);
+            if(args.length < 2) args = new String[]{args[0], ""};
+    
+            if (commandMap.containsKey(args[0]))
+                commandMap.get(args[0]).execute(other, args[1].split(" "));
+            else
+                LOGGER.log(Level.WARNING, "Invalid command syntax::" + toCall);
         }
 
         public int getIndex(String name)
@@ -150,6 +165,11 @@ public class Server {
             int i = getIndex(player);
             if(i>=0) return connections.get(i);
             return null;
+        }
+
+        public List<Connection> getAllConnections()
+        {
+            return connections;
         }
 
         public void disconnect(int i) throws IOException
@@ -334,12 +354,12 @@ public class Server {
         private void playing() throws IOException
         {
             //if(is.ready()) inms = is.readLine();
-            inms = is.readLine();
-            if(!"".equals(inms))
+            if(is.ready()) inms = is.readLine();
+            if(!"".equals(inms) && inms != null)
             {
                 LOGGER.log(Level.INFO, "From " + thisPlayer.getName() + "::" + inms);
                 cManager.addToStack(thisPlayer, inms);
-                inms="";
+                inms=null;
             } 
 
             if(pendingSend()) 
@@ -384,14 +404,19 @@ public class Server {
         commandMap.put("inv", (player, args)-> cManager.getConnection((Player) player).outMessage(((Player) player).getInventory()));
 
         commandMap.put("op", (player, args) -> {
-            if(args[0] == null)((Player) player).op(true);
+            if(args[0].equals(""))((Player) player).op(true);
             else if(cManager.getConnection(args[0]) != null) cManager.getConnection(args[0]).getPlayer().op(true);
-            else cManager.getConnection((Player) player).outMessage("Could not find player");
+            else cManager.getConnection((Player) player).outMessage("Could not find player "+args[0]);
         });
 
-        commandMap.put("deop", (player, args) -> ((Player) player).op(false));
+        commandMap.put("deop", (player, args) -> {
+            if(args[0].equals(""))((Player) player).op(false);
+            else if(cManager.getConnection(args[0]) != null) cManager.getConnection(args[0]).getPlayer().op(false);
+            else cManager.getConnection((Player) player).outMessage("Could not find player "+args[0]);
+        });
 
         commandMap.put("move", (player, args) -> {
+            
                 if("n".equals(args[0])) ((Player) player).move(0, -1, loadedWorld.getLimit());
            else if("e".equals(args[0])) ((Player) player).move(1, 0, loadedWorld.getLimit());
            else if("s".equals(args[0])) ((Player) player).move(0, 1, loadedWorld.getLimit());
@@ -405,10 +430,93 @@ public class Server {
 
         commandMap.put("save", (player, args) -> {cManager.getConnection((Player) player).savePlayer();});
 
-        commandMap.put("help", (player, args) -> {
-            String ret = "Valid command list: \n";
-            for (String s : commandMap.keySet()) ret += s + "\n";
-            cManager.getConnection((Player) player).outMessage(ret);
+        commandMap.put("msg", (player, args) ->
+        {
+            Connection exe = cManager.getConnection((Player) player);
+            Connection out = cManager.getConnection(args[0]);
+            if(args.length < 2) exe.outMessage("Invalid Syntax");
+            else if(out != null) out.outMessage(args[1]);
+            else exe.outMessage("Could not find player "+args[0]);
+        });
+
+        commandMap.put("shout", (player, args) ->
+        {
+            if(args[0].equals("")) cManager.getConnection((Player) player).outMessage("Invalid Syntax");
+            else for(Connection c : cManager.getAllConnections()) c.outMessage("From "+player.getName()+": "+args[0]);
+        });
+
+        commandMap.put("savew", (player, args) ->
+        {
+            Player p = (Player) player;
+            Connection c = cManager.getConnection(p);
+            if(p.isOp()) 
+            {
+                saveFile(loadedWorld, SAVE_DIR+"World\\"+loadedWorld.getName()+".world");
+                c.outMessage("World saved");
+            }
+            else c.outMessage("This command is operator only");
+        });
+
+        commandMap.put("addObject", (player, args) ->
+        {
+            Player p = (Player) player;
+            Connection c = cManager.getConnection(p);
+            if(!p.isOp()) {c.outMessage("This command is operator only");return;}
+            if(args.length < 4) {c.outMessage("Invalid Syntax");return;}
+
+            String[] pos = args[0].split(":");
+            if(pos.length < 2) {c.outMessage("Invalid Syntax");return;}
+
+            int x, y;
+            try{
+                x = Integer.parseInt(pos[0]);
+                y = Integer.parseInt(pos[1]);
+            }catch(Exception e){c.outMessage("Invalid Syntax");return;}
+
+            if(!loadedWorld.isValidPosition(new int[]{y,x})){c.outMessage("Choose a valid location");return;}
+            
+            for(int i = 1; i <= 3; i++) args[i].replace("_", " ");
+            Room r = loadedWorld.getRoom(new int[]{y, x});
+            if(r == null){c.outMessage("Room invalid - assign room a value first");return;}
+            loadedWorld.getRoom(new int[]{y, x}).addEntity(new GameObject(args[1], args[2], args[3]));
+            c.outMessage("Created!");
+        });
+
+        commandMap.put("setRoom", (player, args) ->
+        {
+            Player p = (Player) player;
+            Connection c = cManager.getConnection(p);
+            
+            if(!p.isOp()) {c.outMessage("This command is operator only");return;}
+            if(args.length < 4) {c.outMessage("Invalid Syntax");return;}
+
+            String[] pos = args[0].split(":");
+            if(pos.length < 2) {c.outMessage("Invalid Syntax");return;}
+
+            int x, y;
+            try{
+                x = Integer.parseInt(pos[0]);
+                y = Integer.parseInt(pos[1]);
+            }catch(Exception e){c.outMessage("Invalid Syntax");return;}
+
+            if(!loadedWorld.isValidPosition(new int[]{y,x})){c.outMessage("Choose a valid location");return;}
+
+            for(int i = 1; i <= 3; i++) args[i].replace("_", " ");
+            loadedWorld.writeRoom(new Room(args[1], args[2], args[3]), y, x);
+            c.outMessage("Created!");
+        });
+
+        commandMap.put("getPos", (player, args) ->
+        {
+            Player p = (Player) player;
+            cManager.getConnection(p).outMessage("Your coordinates are "+p.getPosition()[0]+":"+p.getPosition()[1]);
+        });
+
+        commandMap.put("help", (player, args) ->
+        {
+            String s = "\nVALID COMMANDS\n\n";
+            for(String com : commandMap.keySet()) s += com+"\n";
+            cManager.getConnection((Player) player).outMessage(s);
         });
     }
     

@@ -15,6 +15,12 @@ public class Room extends GameObject
         entities = new ArrayList<GameObject>();
     }
 
+    public Room(String name, String desc, String view)
+    {
+        super(name, desc, view);
+        entities = new ArrayList<GameObject>();
+    }
+
     public GameObject getEntitiesByIndex(int i)
     {
         return entities.get(i);
