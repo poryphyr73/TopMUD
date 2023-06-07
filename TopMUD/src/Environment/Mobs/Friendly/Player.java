@@ -5,7 +5,6 @@ import Environment.Mobs.Mob;
 public class Player extends Mob
 {
     private String password;
-    private PlayerClasses pClass;
     private int xpos, ypos;
     private boolean isOp;
 
@@ -20,11 +19,6 @@ public class Player extends Mob
     public Player(String name)
     {
         super(name,"player::"+name,name);
-    }
-
-    public void setClass(PlayerClasses _pClass)
-    {
-        pClass=_pClass;
     }
 
     public void setPassword(String _password)

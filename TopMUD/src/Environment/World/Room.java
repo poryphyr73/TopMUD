@@ -1,6 +1,5 @@
 package Environment.World;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -383,11 +383,6 @@ public class Server {
         {
             return !("".equals(ms) || ms == null);
         }
-
-        public Socket getSocket() 
-        {
-            return s;
-        }
     }
 
     private void commandsInit()
@@ -519,7 +514,7 @@ public class Server {
             cManager.getConnection((Player) player).outMessage(s);
         });
     }
-    
+
     private void loadWorld(String toLoad) 
     {
         File f;
