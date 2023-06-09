@@ -2,6 +2,11 @@ package Environment;
 
 import java.io.Serializable;
 
+/** The GameObject class is very rudimentary, but it should serve as a framework for any entity viable for the game.
+ *  It has a name, a description, and a "view" (physical appearcance tag). All entities extend the GameObject
+ * 
+ *  TODO maybe this could just be called "Entity"? Though GameObject is more frequently used in modern platforms
+ */
 public class GameObject implements Serializable
 {
     private String name;

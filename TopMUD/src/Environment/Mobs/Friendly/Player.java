@@ -2,6 +2,9 @@ package Environment.Mobs.Friendly;
 
 import Environment.Mobs.Mob;
 
+/** A player is a special mob controlled by a user.
+ *  These mobs have to be user controlled.
+ */
 public class Player extends Mob
 {
     private String password;
@@ -41,6 +44,12 @@ public class Player extends Mob
 
     public boolean isOp() {return isOp;}
 
+    /** Move a player by updating its coordinates.
+     * 
+     * @param x The amount to increase the x coordinate by
+     * @param y The amount to increase the y coordinate by
+     * @param limit The upper bounds of the room
+     */
     public void move(int x, int y, int[] limit)
     {
         xpos += x;
@@ -52,11 +61,19 @@ public class Player extends Mob
         if(xpos > limit[1]) xpos = limit[1];
     }
 
+    /** The position of the player as an array
+     * 
+     * @return The player's position
+     */
     public int[] getPosition()
     {
         return new int[]{ypos, xpos};
     }
 
+    /** Increment or decrement health. This method demonstrates a capacity for a combat system to be implemented
+     * 
+     * @param k The value by which the player's health should change
+     */
     public void updateHealth(int k)
     {
         hp += k;

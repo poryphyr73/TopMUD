@@ -22,7 +22,7 @@ public class Client extends Thread
             lis.start();
 
             String ms = "";
-            while(true){
+            while(true){ // This conditional handles sending messages to the server
                 ms = kb.nextLine();
                 try {os.println(ms);} catch (Exception e) {
                     // TODO
@@ -31,11 +31,11 @@ public class Client extends Thread
                 }
             }
         }catch(IOException e) {
-            //TODO
             e.printStackTrace();
         }
     }
 
+    // This threaded class handles listening for messages from the server
     private static class Listener extends Thread
     {
         private BufferedReader is;

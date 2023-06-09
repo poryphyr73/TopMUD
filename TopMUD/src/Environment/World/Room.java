@@ -5,6 +5,9 @@ import java.util.List;
 
 import Environment.GameObject;
 
+/** A room is simply a GameObject that houses entities. A player can visit a room.
+ *  Enemies, objects, and other entities could be in the room.
+ */
 public class Room extends GameObject
 {
     private List<GameObject> entities;
